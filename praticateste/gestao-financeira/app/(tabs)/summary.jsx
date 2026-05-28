@@ -1,8 +1,9 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
-import PieChart from "react-native-pie-chart";
+import { useFocusEffect } from "expo-router";
 import MonthYearPicker from "../../components/MonthYearPicker";
 import SummaryItem from "../../components/SummaryItem";
+import PieChartCustom from "../../components/PieChartCustom";
 import { globalStyles } from "../../styles/globalStyles";
 import { colors } from "../../constants/colors";
 import { AuthContext } from "../../contexts/AuthContext";
@@ -14,20 +15,30 @@ export default function Summary() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  const loadTransactions = async () => {
+  // Função que carrega os dados da API
+  const loadTransactions = useCallback(async () => {
     try {
       const response = await api.get("/transactions", {
         params: { mes: selectedMonth, ano: selectedYear },
       });
+      console.log("Transações carregadas:", response.data);
       setTransactions(response.data);
     } catch (error) {
       console.error("Erro ao carregar transações:", error);
     }
-  };
+  }, [selectedMonth, selectedYear]);
 
+  // Recarrega sempre que o mês/ano mudarem
   useEffect(() => {
     loadTransactions();
-  }, [selectedMonth, selectedYear]);
+  }, [loadTransactions, selectedMonth, selectedYear]);
+
+  // 🔄 NOVIDADE: recarrega toda vez que a tela de Resumo ganhar foco (ao voltar de outra aba)
+  useFocusEffect(
+    useCallback(() => {
+      loadTransactions();
+    }, [loadTransactions])
+  );
 
   // Calcular totais
   const totals = {};
@@ -52,7 +63,8 @@ export default function Summary() {
   const pieData = Object.values(totals)
     .filter(cat => !cat.isIncome && cat.value > 0)
     .map(cat => ({
-      value: Number(cat.value), // garantia de número
+      name: cat.name,
+      value: Number(cat.value),
       color: cat.color,
     }));
 
@@ -71,14 +83,9 @@ export default function Summary() {
       <ScrollView style={globalStyles.content}>
         {pieData.length > 0 ? (
           <View style={styles.chartContainer}>
-            <PieChart
-              widthAndHeight={200}
-              series={pieData.map(p => p.value)}
-              sliceColor={pieData.map(p => p.color)}
-              coverRadius={0.6}
-            />
+            <PieChartCustom data={pieData} width={screenWidth - 40} height={200} />
             <View style={{ marginTop: 16 }}>
-              {Object.values(totals).filter(cat => !cat.isIncome && cat.value > 0).map((cat, idx) => (
+              {pieData.map((cat, idx) => (
                 <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
                   <View style={{ width: 12, height: 12, backgroundColor: cat.color, marginRight: 8 }} />
                   <Text style={{ fontSize: 12 }}>{cat.name}</Text>
