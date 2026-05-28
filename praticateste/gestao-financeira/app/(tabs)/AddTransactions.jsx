@@ -1,135 +1,104 @@
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  KeyboardAvoidingView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
   View,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Platform,
 } from "react-native";
-import { useContext, useMemo, useRef, useState } from "react";
 import { globalStyles } from "../../styles/globalStyles";
 import Button from "../../components/Button";
+import { useContext, useRef, useState } from "react";
 import DescriptionInput from "../../components/DescriptionInput";
 import CurrencyInput from "../../components/CurrencyInput";
 import DatePicker from "../../components/DatePicker";
 import CategoryPicker from "../../components/CategoryPicker";
 import { MoneyContext } from "../../contexts/GlobalState";
-import { colors } from "../../constants/colors";
+import { api } from "../../services/api";
 
-/**
- * Tela "Adicionar Transação".
- *
- * O formulário escolhe a categoria padrão de forma dinâmica (a primeira
- * `isIncome` ou, na ausência, a primeira da lista). Em caso de falha de
- * rede, exibe Alert e mantém o formulário preenchido para o usuário tentar
- * novamente.
- *
- * @returns {JSX.Element}
- */
 export default function AddTransactions() {
-  const { categories, loading, addTransaction } = useContext(MoneyContext);
-  const valueInputRef = useRef();
-
-  const defaultCategoryId = useMemo(() => {
-    if (categories.length === 0) return "";
-    const income = categories.find((c) => c.isIncome);
-    return income ? income.id : categories[0].id;
-  }, [categories]);
-
-  const buildInitialForm = () => ({
+  const [form, setForm] = useState({
     description: "",
     value: 0,
     date: new Date(),
-    categoryId: defaultCategoryId,
+    categoryId: "",
   });
-
-  const [form, setForm] = useState(buildInitialForm);
   const [submitting, setSubmitting] = useState(false);
+  const valueInputRef = useRef();
+  const { categories, refresh } = useContext(MoneyContext);
 
-  // mantém o categoryId default coerente com a lista carregada
-  if (!form.categoryId && defaultCategoryId) {
-    setForm((prev) => ({ ...prev, categoryId: defaultCategoryId }));
-  }
-
-  const handleAdd = async () => {
+  const addTransaction = async () => {
+    // Validações
     if (!form.description.trim()) {
-      Alert.alert("Informe a descrição.");
+      Alert.alert("Erro", "Digite uma descrição");
       return;
     }
-    if (!form.value || form.value <= 0) {
-      Alert.alert("Informe um valor maior que zero.");
+    if (form.value <= 0) {
+      Alert.alert("Erro", "Digite um valor válido");
       return;
     }
     if (!form.categoryId) {
-      Alert.alert("Selecione uma categoria.");
+      Alert.alert("Erro", "Selecione uma categoria");
       return;
     }
 
     setSubmitting(true);
     try {
-      await addTransaction({
-        description: form.description.trim(),
+      await api.post("/transactions", {
+        description: form.description,
         value: form.value,
         date: form.date,
         categoryId: form.categoryId,
       });
-      setForm(buildInitialForm());
-      Alert.alert("Transação adicionada com sucesso!");
-    } catch (e) {
-      Alert.alert("Erro ao salvar", e.message ?? "Tente novamente.");
+      
+      // Limpa o formulário
+      setForm({
+        description: "",
+        value: 0,
+        date: new Date(),
+        categoryId: "",
+      });
+      
+      refresh(); // Recarrega os dados
+      Alert.alert("Sucesso", "Transação adicionada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao adicionar:", error);
+      Alert.alert("Erro", error.response?.data?.error || "Falha ao adicionar transação");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={[globalStyles.screenContainer, styles.center]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={globalStyles.secondaryText}>Carregando categorias...</Text>
-      </View>
-    );
-  }
-
-  if (categories.length === 0) {
-    return (
-      <View style={[globalStyles.screenContainer, styles.center]}>
-        <Text style={globalStyles.primaryText}>
-          Nenhuma categoria cadastrada.
-        </Text>
-        <Text style={globalStyles.secondaryText}>
-          Vá até a aba &quot;Categorias&quot; para criar a primeira.
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <KeyboardAvoidingView style={globalStyles.screenContainer}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      style={globalStyles.screenContainer}
+    >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView style={globalStyles.content}>
           <View style={styles.form}>
-            <DescriptionInput
-              form={form}
-              setForm={setForm}
-              valueInputRef={valueInputRef}
+            <DescriptionInput 
+              form={form} 
+              setForm={setForm} 
+              valueInputRef={valueInputRef} 
             />
-            <CurrencyInput
-              form={form}
-              setForm={setForm}
-              valueInputRef={valueInputRef}
+            <CurrencyInput 
+              form={form} 
+              setForm={setForm} 
             />
-            <DatePicker form={form} setForm={setForm} />
-            <CategoryPicker
-              form={form}
-              setForm={setForm}
-              categories={categories}
+            <DatePicker 
+              form={form} 
+              setForm={setForm} 
+            />
+            <CategoryPicker 
+              form={form} 
+              setForm={setForm} 
+              categories={categories} 
             />
           </View>
-          <Button onPress={handleAdd} disabled={submitting}>
+          <Button onPress={addTransaction} disabled={submitting}>
             {submitting ? "Salvando..." : "Adicionar"}
           </Button>
         </ScrollView>
@@ -143,11 +112,5 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 40,
     marginTop: 10,
-  },
-  center: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    padding: 24,
   },
 });

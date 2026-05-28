@@ -1,18 +1,17 @@
-import { Platform, Text, TextInput, TouchableOpacity, View } from "react-native"
-import { globalStyles } from "../styles/globalStyles"
-import { useState } from "react"
-import RNDateTimePicker from "@react-native-community/datetimepicker"
+import { Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { globalStyles } from "../styles/globalStyles";
+import { useState } from "react";
+import RNDateTimePicker from "@react-native-community/datetimepicker";
 
 export default function DatePicker({ form, setForm }) {
-  const [showPicker, setShowPicker] = useState(false)
+  const [showPicker, setShowPicker] = useState(false);
 
-  const handleDateChange = (_, selectDate) => {
-    setShowPicker(false)
-
-    if (selectDate) {
-      setForm({ ...form, date: selectDate })
+  const handleDateChange = (_, selectedDate) => {
+    setShowPicker(false);
+    if (selectedDate) {
+      setForm({ ...form, date: selectedDate });
     }
-  }
+  };
 
   return (
     <View>
@@ -20,12 +19,11 @@ export default function DatePicker({ form, setForm }) {
       <TouchableOpacity onPress={() => setShowPicker(true)}>
         <TextInput
           value={form.date.toLocaleDateString("pt-BR")}
-          onChangeText={(text) => setForm({ ...form, date: text })}
           style={globalStyles.input}
           editable={false}
+          pointerEvents="none"
         />
       </TouchableOpacity>
-
       {showPicker && (
         <RNDateTimePicker
           mode="date"
@@ -35,5 +33,5 @@ export default function DatePicker({ form, setForm }) {
         />
       )}
     </View>
-  )
+  );
 }

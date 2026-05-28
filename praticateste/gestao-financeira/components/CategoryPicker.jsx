@@ -3,16 +3,6 @@ import { StyleSheet, Text, View } from "react-native";
 import { globalStyles } from "../styles/globalStyles";
 import { colors } from "../constants/colors";
 
-/**
- * Picker de categoria que itera dinamicamente sobre a lista vinda do back-end.
- *
- * @param {{
- *   form: { categoryId: string },
- *   setForm: (next: object) => void,
- *   categories: Array<{ id: string, displayName: string }>
- * }} props
- * @returns {JSX.Element}
- */
 export default function CategoryPicker({ form, setForm, categories }) {
   return (
     <View>
@@ -20,12 +10,11 @@ export default function CategoryPicker({ form, setForm, categories }) {
       <View style={styles.picker}>
         <Picker
           selectedValue={form.categoryId}
-          onValueChange={(itemValue) =>
-            setForm({ ...form, categoryId: itemValue })
-          }
+          onValueChange={(itemValue) => setForm({ ...form, categoryId: itemValue })}
         >
-          {categories.map((c) => (
-            <Picker.Item key={c.id} label={c.displayName} value={c.id} />
+          <Picker.Item label="Selecione uma categoria" value="" />
+          {categories && categories.map((cat) => (
+            <Picker.Item key={cat.id} label={cat.displayName} value={cat.id} />
           ))}
         </Picker>
       </View>
@@ -35,12 +24,12 @@ export default function CategoryPicker({ form, setForm, categories }) {
 
 const styles = StyleSheet.create({
   picker: {
-    display: "flex",
     justifyContent: "center",
     height: 44,
     borderColor: colors.secondaryText,
     borderWidth: 1,
     borderRadius: 8,
-    flexGrow: 1,
+    overflow: "hidden",
+    backgroundColor: "#fff",
   },
 });

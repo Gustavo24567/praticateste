@@ -1,5 +1,5 @@
-import { Text, TextInput, View } from "react-native"
-import { globalStyles } from "../styles/globalStyles"
+import { Text, TextInput, View } from "react-native";
+import { globalStyles } from "../styles/globalStyles";
 
 export default function DescriptionInput({ form, setForm, valueInputRef }) {
   return (
@@ -9,9 +9,10 @@ export default function DescriptionInput({ form, setForm, valueInputRef }) {
         value={form.description}
         returnKeyType="next"
         onChangeText={(text) => setForm({ ...form, description: text })}
-        onSubmitEditing={() => valueInputRef.current.focus()}
+        onSubmitEditing={() => valueInputRef?.current?.focus()}
         style={globalStyles.input}
+        placeholder="Ex: Salário, Compras..."
       />
     </View>
-  )
+  );
 }

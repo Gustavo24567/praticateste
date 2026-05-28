@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// use o IP do seu computador (ex: 192.168.0.105)
-const BASE_URL = "http://localhost:3000";
+// Use o IP do seu computador (ex: 192.168.0.105) - o mesmo que funciona no navegador do celular
+const BASE_URL = "http://localhost:3000"; // ⚠️ TROQUE PELO SEU IP REAL
 
 const api = axios.create({
   baseURL: BASE_URL,
