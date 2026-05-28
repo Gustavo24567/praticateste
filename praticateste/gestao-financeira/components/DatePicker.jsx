@@ -8,9 +8,7 @@ export default function DatePicker({ form, setForm }) {
 
   const handleDateChange = (_, selectedDate) => {
     setShowPicker(false);
-    if (selectedDate) {
-      setForm({ ...form, date: selectedDate });
-    }
+    if (selectedDate) setForm({ ...form, date: selectedDate });
   };
 
   return (

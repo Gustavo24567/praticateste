@@ -3,9 +3,9 @@ import { globalStyles } from "../styles/globalStyles";
 
 export default function CurrencyInput({ form, setForm }) {
   const handleCurrencyChange = (text) => {
-    const formattedValue = text.replace(/\D/g, "");
-    const numberValue = formattedValue ? parseFloat(formattedValue) / 100 : 0;
-    setForm({ ...form, value: numberValue });
+    const cleaned = text.replace(/\D/g, "");
+    const numeric = cleaned ? parseFloat(cleaned) / 100 : 0;
+    setForm({ ...form, value: numeric });
   };
 
   return (

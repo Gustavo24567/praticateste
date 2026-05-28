@@ -1,27 +1,20 @@
 import { StyleSheet, Text, TouchableHighlight } from "react-native";
 import { colors } from "../constants/colors";
 
-/**
- * Botão primário do app.
- *
- * @param {{ children: React.ReactNode, onPress: () => void, disabled?: boolean }} props
- * @returns {JSX.Element}
- */
-export default function Button({ children, onPress, disabled = false }) {
+export default function Button({ children, onPress, disabled }) {
   return (
     <TouchableHighlight
-      style={[style.background, disabled && style.disabled]}
-      onPress={disabled ? undefined : onPress}
-      underlayColor={colors.primary}
+      style={[styles.background, disabled && styles.disabled]}
+      onPress={onPress}
+      disabled={disabled}
     >
-      <Text style={style.text}>{children}</Text>
+      <Text style={styles.text}>{children}</Text>
     </TouchableHighlight>
   );
 }
 
-const style = StyleSheet.create({
+const styles = StyleSheet.create({
   background: {
-    display: "flex",
     alignItems: "center",
     justifyContent: "center",
     height: 44,
@@ -29,7 +22,7 @@ const style = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   disabled: {
-    opacity: 0.6,
+    backgroundColor: colors.secondaryText,
   },
   text: {
     color: colors.primaryContrast,

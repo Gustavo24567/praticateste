@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Use o IP do seu computador (ex: 192.168.0.105) - o mesmo que funciona no navegador do celular
-const BASE_URL = "http://localhost:3000"; // ⚠️ TROQUE PELO SEU IP REAL
+// ⚠️ Use o IP do seu computador no lugar de "192.168.X.X" (teste no navegador do celular)
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.22.39:3000";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -18,9 +18,9 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Funções de autenticação
 export const register = (name, email, password) => 
   api.post('/register', { name, email, password });
-
 export const login = (email, password) => 
   api.post('/login', { email, password });
 

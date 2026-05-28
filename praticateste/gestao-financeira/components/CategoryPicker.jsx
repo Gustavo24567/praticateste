@@ -10,10 +10,10 @@ export default function CategoryPicker({ form, setForm, categories }) {
       <View style={styles.picker}>
         <Picker
           selectedValue={form.categoryId}
-          onValueChange={(itemValue) => setForm({ ...form, categoryId: itemValue })}
+          onValueChange={(value) => setForm({ ...form, categoryId: value })}
         >
           <Picker.Item label="Selecione uma categoria" value="" />
-          {categories && categories.map((cat) => (
+          {categories?.map((cat) => (
             <Picker.Item key={cat.id} label={cat.displayName} value={cat.id} />
           ))}
         </Picker>

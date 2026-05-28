@@ -16,7 +16,7 @@ import CurrencyInput from "../../components/CurrencyInput";
 import DatePicker from "../../components/DatePicker";
 import CategoryPicker from "../../components/CategoryPicker";
 import { MoneyContext } from "../../contexts/GlobalState";
-import { api } from "../../services/api";
+import  api  from "../../services/api";
 
 export default function AddTransactions() {
   const [form, setForm] = useState({
@@ -30,7 +30,6 @@ export default function AddTransactions() {
   const { categories, refresh } = useContext(MoneyContext);
 
   const addTransaction = async () => {
-    // Validações
     if (!form.description.trim()) {
       Alert.alert("Erro", "Digite uma descrição");
       return;
@@ -52,50 +51,41 @@ export default function AddTransactions() {
         date: form.date,
         categoryId: form.categoryId,
       });
-      
-      // Limpa o formulário
       setForm({
         description: "",
         value: 0,
         date: new Date(),
         categoryId: "",
       });
-      
-      refresh(); // Recarrega os dados
-      Alert.alert("Sucesso", "Transação adicionada com sucesso!");
+      refresh();
+      Alert.alert("Sucesso", "Transação adicionada!");
     } catch (error) {
-      console.error("Erro ao adicionar:", error);
-      Alert.alert("Erro", error.response?.data?.error || "Falha ao adicionar transação");
+      console.error("Erro:", error);
+      Alert.alert("Erro", error.response?.data?.error || "Falha ao adicionar");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={globalStyles.screenContainer}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView style={globalStyles.content}>
           <View style={styles.form}>
-            <DescriptionInput 
-              form={form} 
-              setForm={setForm} 
-              valueInputRef={valueInputRef} 
+            <DescriptionInput
+              form={form}
+              setForm={setForm}
+              valueInputRef={valueInputRef}
             />
-            <CurrencyInput 
-              form={form} 
-              setForm={setForm} 
-            />
-            <DatePicker 
-              form={form} 
-              setForm={setForm} 
-            />
-            <CategoryPicker 
-              form={form} 
-              setForm={setForm} 
-              categories={categories} 
+            <CurrencyInput form={form} setForm={setForm} />
+            <DatePicker form={form} setForm={setForm} />
+            <CategoryPicker
+              form={form}
+              setForm={setForm}
+              categories={categories}
             />
           </View>
           <Button onPress={addTransaction} disabled={submitting}>
@@ -108,9 +98,5 @@ export default function AddTransactions() {
 }
 
 const styles = StyleSheet.create({
-  form: {
-    gap: 12,
-    marginBottom: 40,
-    marginTop: 10,
-  },
+  form: { gap: 12, marginBottom: 40, marginTop: 10 },
 });

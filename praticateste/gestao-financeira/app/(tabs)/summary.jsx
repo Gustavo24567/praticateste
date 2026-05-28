@@ -1,12 +1,12 @@
 import { useState, useEffect, useContext } from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
-import { VictoryPie, VictoryLegend } from "victory-native";
+import PieChart from "react-native-pie-chart";
 import MonthYearPicker from "../../components/MonthYearPicker";
 import SummaryItem from "../../components/SummaryItem";
 import { globalStyles } from "../../styles/globalStyles";
 import { colors } from "../../constants/colors";
 import { AuthContext } from "../../contexts/AuthContext";
-import { api } from "../../services/api";
+import api from "../../services/api";
 
 export default function Summary() {
   const { user } = useContext(AuthContext);
@@ -21,7 +21,7 @@ export default function Summary() {
       });
       setTransactions(response.data);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao carregar transações:", error);
     }
   };
 
@@ -29,29 +29,34 @@ export default function Summary() {
     loadTransactions();
   }, [selectedMonth, selectedYear]);
 
-  // Calcular totais por categoria
+  // Calcular totais
   const totals = {};
   let balance = 0;
   transactions.forEach(tx => {
-    const catId = tx.category.id;
-    if (!totals[catId]) {
-      totals[catId] = { name: tx.category.displayName, value: 0, isIncome: tx.category.isIncome };
+    const cat = tx.category;
+    if (!totals[cat.id]) {
+      totals[cat.id] = {
+        name: cat.displayName,
+        value: 0,
+        isIncome: cat.isIncome,
+        category: cat,
+        color: cat.background || "#CCCCCC",
+      };
     }
-    totals[catId].value += tx.value;
-    if (tx.category.isIncome) {
-      balance += tx.value;
-    } else {
-      balance -= tx.value;
-    }
+    totals[cat.id].value += tx.value;
+    if (cat.isIncome) balance += tx.value;
+    else balance -= tx.value;
   });
 
   // Dados para o gráfico (apenas despesas)
   const pieData = Object.values(totals)
     .filter(cat => !cat.isIncome && cat.value > 0)
-    .map(cat => ({ x: cat.name, y: cat.value }));
+    .map(cat => ({
+      value: Number(cat.value), // garantia de número
+      color: cat.color,
+    }));
 
   const screenWidth = Dimensions.get("window").width;
-  const hasExpenses = pieData.length > 0;
 
   return (
     <View style={globalStyles.screenContainer}>
@@ -64,40 +69,38 @@ export default function Summary() {
         />
       </View>
       <ScrollView style={globalStyles.content}>
-        {/* GRÁFICO DE PIZZA */}
-        <View style={styles.chartContainer}>
-          <Text style={styles.chartTitle}>Despesas por categoria</Text>
-          {hasExpenses ? (
-            <>
-              <VictoryPie
-                data={pieData}
-                width={screenWidth - 40}
-                height={250}
-                colorScale="qualitative"
-                innerRadius={50}
-                labelRadius={70}
-                style={{ labels: { fontSize: 12, fill: "#333" } }}
-              />
-              <VictoryLegend
-                data={pieData.map(item => ({ name: item.x }))}
-                orientation="vertical"
-                gutter={10}
-                style={{ labels: { fontSize: 10 } }}
-                width={screenWidth - 40}
-              />
-            </>
-          ) : (
-            <Text style={globalStyles.secondaryText}>Nenhuma despesa no período</Text>
-          )}
-        </View>
+        {pieData.length > 0 ? (
+          <View style={styles.chartContainer}>
+            <PieChart
+              widthAndHeight={200}
+              series={pieData.map(p => p.value)}
+              sliceColor={pieData.map(p => p.color)}
+              coverRadius={0.6}
+            />
+            <View style={{ marginTop: 16 }}>
+              {Object.values(totals).filter(cat => !cat.isIncome && cat.value > 0).map((cat, idx) => (
+                <View key={idx} style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+                  <View style={{ width: 12, height: 12, backgroundColor: cat.color, marginRight: 8 }} />
+                  <Text style={{ fontSize: 12 }}>{cat.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <Text style={globalStyles.secondaryText}>Nenhuma despesa no período</Text>
+        )}
 
-        {/* LISTA DE TOTAIS */}
-        {Object.values(totals).map((cat) => (
-          <SummaryItem key={cat.name} categoryName={cat.name} value={cat.value} isIncome={cat.isIncome} />
+        {Object.values(totals).map(cat => (
+          <SummaryItem
+            key={cat.name}
+            categoryName={cat.name}
+            value={cat.value}
+            isIncome={cat.isIncome}
+            category={cat.category}
+          />
         ))}
-        
+
         <View style={globalStyles.line} />
-        
         <View style={styles.balance}>
           <Text style={styles.balanceText}>Saldo</Text>
           <Text style={balance > 0 ? globalStyles.positiveText : globalStyles.negativeText}>
@@ -120,7 +123,6 @@ const styles = StyleSheet.create({
   },
   title: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   chartContainer: { alignItems: "center", marginVertical: 16 },
-  chartTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 12 },
   balance: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
   balanceText: { fontSize: 18, fontWeight: "800", color: colors.primaryText },
 });

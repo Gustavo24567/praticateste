@@ -7,7 +7,7 @@ import TransactionItem from "../../components/TransactionItem";
 import TransactionFormModal from "../../components/TransactionFormModal";
 import { globalStyles } from "../../styles/globalStyles";
 import { colors } from "../../constants/colors";
-import { api } from "../../services/api";
+import  api  from "../../services/api";
 
 export default function Transactions() {
   const { user } = useContext(AuthContext);

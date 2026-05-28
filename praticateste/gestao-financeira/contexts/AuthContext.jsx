@@ -1,4 +1,3 @@
-// contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api, { register as registerApi, login as loginApi } from "../services/api";
