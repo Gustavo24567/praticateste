@@ -1,6 +1,5 @@
-// app/(tabs)/index.jsx
 import { useState, useContext, useEffect } from "react";
-import { View, FlatList, Text, Alert, StyleSheet } from "react-native";
+import { View, FlatList, Text, Alert, StyleSheet, RefreshControl } from "react-native";
 import { MoneyContext } from "../../contexts/GlobalState";
 import { AuthContext } from "../../contexts/AuthContext";
 import MonthYearPicker from "../../components/MonthYearPicker";
@@ -12,21 +11,35 @@ import { api } from "../../services/api";
 
 export default function Transactions() {
   const { user } = useContext(AuthContext);
-  const { categories, refresh } = useContext(MoneyContext); // precisa ter categories no contexto
+  const moneyContext = useContext(MoneyContext);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Estados para o modal
+  // Estados para o modal de edição
   const [modalVisible, setModalVisible] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState(null);
 
+  // Verifica se o contexto está disponível
+  if (!moneyContext) {
+    return (
+      <View style={styles.center}>
+        <Text>Carregando contexto...</Text>
+      </View>
+    );
+  }
+
+  const { categories, refresh: refreshContext } = moneyContext;
+
+  // Carrega transações do backend com filtro
   const loadTransactions = async () => {
     setLoading(true);
     try {
-      const data = await api.listTransactions({ mes: selectedMonth, ano: selectedYear });
-      setTransactions(data);
+      const response = await api.get('/transactions', {
+        params: { mes: selectedMonth, ano: selectedYear }
+      });
+      setTransactions(response.data);
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Não foi possível carregar as transações");
@@ -40,37 +53,32 @@ export default function Transactions() {
   }, [selectedMonth, selectedYear]);
 
   // Abrir modal para editar
-  const handleLongPress = (transaction) => {
+  const handleEdit = (transaction) => {
     setEditingTransaction(transaction);
     setModalVisible(true);
   };
 
-  // Fechar modal e limpar edição
+  // Fechar modal
   const closeModal = () => {
     setModalVisible(false);
     setEditingTransaction(null);
   };
 
-  // Salvar edição (ou criar, se um dia for usado para criação)
+  // Salvar edição
   const handleSave = async (formData) => {
     try {
       if (editingTransaction) {
-        // Edição
-        await api.updateTransaction(editingTransaction.id, {
+        await api.put(`/transactions/${editingTransaction.id}`, {
           description: formData.description,
           value: formData.value,
           date: formData.date,
           categoryId: formData.categoryId,
         });
         Alert.alert("Sucesso", "Transação atualizada");
-      } else {
-        // Criação (caso queira permitir também)
-        await api.createTransaction(formData);
-        Alert.alert("Sucesso", "Transação adicionada");
       }
       closeModal();
-      loadTransactions(); // recarrega a lista
-      refresh(); // se usar contexto global, atualiza também
+      loadTransactions();
+      refreshContext();
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Não foi possível salvar a transação");
@@ -89,10 +97,10 @@ export default function Transactions() {
           style: "destructive",
           onPress: async () => {
             try {
-              await api.deleteTransaction(transaction.id);
+              await api.delete(`/transactions/${transaction.id}`);
               Alert.alert("Sucesso", "Transação excluída");
               loadTransactions();
-              refresh();
+              refreshContext();
             } catch (error) {
               Alert.alert("Erro", "Não foi possível excluir");
             }
@@ -102,28 +110,27 @@ export default function Transactions() {
     );
   };
 
-  // Como o TransactionItem espera receber o objeto inteiro, vamos modificar o renderItem
+  // Menu de opções ao pressionar longamente
+  const handleLongPress = (transaction) => {
+    Alert.alert(
+      "Opções",
+      `O que deseja fazer com "${transaction.description}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Editar", onPress: () => handleEdit(transaction) },
+        { text: "Excluir", onPress: () => confirmDelete(transaction), style: "destructive" },
+      ]
+    );
+  };
+
   const renderItem = ({ item }) => (
-    <TransactionItem
-      item={item}
-      onLongPress={() => {
-        Alert.alert(
-          "Opções",
-          `O que deseja fazer com "${item.description}"?`,
-          [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Editar", onPress: () => handleLongPress(item) },
-            { text: "Excluir", onPress: () => confirmDelete(item), style: "destructive" },
-          ]
-        );
-      }}
-    />
+    <TransactionItem item={item} onLongPress={() => handleLongPress(item)} />
   );
 
   return (
     <View style={globalStyles.screenContainer}>
       <View style={styles.header}>
-        <Text style={styles.welcome}>Olá, {user?.name?.split(" ")[0]} 👋</Text>
+        <Text style={styles.welcome}>Olá, {user?.name?.split(" ")[0] || "Usuário"} 👋</Text>
         <MonthYearPicker
           selectedMonth={selectedMonth}
           selectedYear={selectedYear}
@@ -135,10 +142,15 @@ export default function Transactions() {
         data={transactions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={globalStyles.secondaryText}>Nenhuma transação neste período</Text>}
+        ListEmptyComponent={
+          <Text style={globalStyles.secondaryText}>Nenhuma transação neste período</Text>
+        }
         refreshing={loading}
         onRefresh={loadTransactions}
         style={globalStyles.content}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadTransactions} colors={[colors.primary]} />
+        }
       />
 
       {/* Modal de edição */}
@@ -163,4 +175,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   welcome: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

@@ -11,14 +11,15 @@ export default function Register() {
   const { register } = useContext(AuthContext);
 
   const handleRegister = async () => {
-  try {
-    await register(name, email, password);
-    router.replace('/(tabs)');
-  } catch (error) {
-    console.log('Erro detalhado:', error);
-    Alert.alert('Erro', error.message || 'Falha no cadastro');
-  }
-};
+    try {
+      await register(name, email, password);
+      Alert.alert("Sucesso", "Conta criada com sucesso!");
+      router.replace("/(tabs)");
+    } catch (error) {
+      Alert.alert("Erro", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Criar Conta</Text>

@@ -12,9 +12,9 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       await login(email, password);
-      router.replace("/(tabs)"); // vai para a área principal
+      router.replace("/(tabs)");
     } catch (error) {
-      Alert.alert("Erro", error.message || "Falha no login");
+      Alert.alert("Erro", error.message);
     }
   };
 
@@ -48,7 +48,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", padding: 20 },
   title: { fontSize: 32, fontWeight: "bold", marginBottom: 40, textAlign: "center" },
-  button: { backgroundColor: "#2ecc71", padding: 12, borderRadius: 8, alignItems: "center", marginTop: 20 },
+  button: { backgroundColor: "#00702f", padding: 12, borderRadius: 8, alignItems: "center", marginTop: 20 },
   buttonText: { color: "#fff", fontWeight: "bold" },
   link: { marginTop: 20, textAlign: "center", color: "#3498db" },
 });

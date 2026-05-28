@@ -1,39 +1,27 @@
-// services/api.js
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:3000";
+// use o IP do seu computador (ex: 192.168.0.105)
+const BASE_URL = "http://localhost:3000";
 
-
-async function request(path, options = {}) {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`HTTP ${response.status}: ${text}`);
-  }
-
-  return response.status === 204 ? null : response.json();
-}
-
-export const api = axios.create({
+const api = axios.create({
   baseURL: BASE_URL,
-  listCategories:    ()        => request("/categories"),
-  createCategory:    (data)    => request("/categories",        { method: "POST",   body: JSON.stringify(data) }),
-  updateCategory:    (id, d)   => request(`/categories/${id}`,  { method: "PUT",    body: JSON.stringify(d) }),
-  deleteCategory:    (id)      => request(`/categories/${id}`,  { method: "DELETE" }),
-
-  // services/api.js
-listTransactions: (params = {}) => {
-  const queryString = new URLSearchParams(params).toString();
-  const url = `/transactions${queryString ? `?${queryString}` : ""}`;
-  return request(url);
-},
-  createTransaction: (data)    => request("/transactions",       { method: "POST",   body: JSON.stringify(data) }),
-  updateTransaction: (id, d)   => request(`/transactions/${id}`, { method: "PUT",    body: JSON.stringify(d) }),
-  deleteTransaction: (id)      => request(`/transactions/${id}`, { method: "DELETE" }),
+  timeout: 10000,
 });
+
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('@Money:token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+  return config;
+});
+
+export const register = (name, email, password) => 
+  api.post('/register', { name, email, password });
+
+export const login = (email, password) => 
+  api.post('/login', { email, password });
 
 export default api;
