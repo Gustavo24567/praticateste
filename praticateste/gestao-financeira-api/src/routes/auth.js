@@ -5,6 +5,7 @@ import { prisma } from "../lib/prisma.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "chave_super_secreta";
+console.log("JWT_SECRET:", JWT_SECRET); // Verifique se a variável de ambiente está sendo lida corretamente
 
 router.post("/register", async (req, res, next) => {
   try {

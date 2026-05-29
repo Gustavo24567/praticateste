@@ -60,15 +60,22 @@ router.put("/:id", async (req, res, next) => {
 // DELETE /categories/:id - remove categoria (apenas se for do usuário e não for padrão)
 router.delete("/:id", async (req, res, next) => {
   try {
+    // Busca só pelo id, sem filtrar por userId
     const existing = await prisma.category.findFirst({
-      where: { id: req.params.id, userId: req.userId },
+      where: { id: req.params.id },
     });
+
     if (!existing) {
-      return res.status(404).json({ error: "Categoria não encontrada ou não pertence ao usuário" });
+      return res.status(404).json({ error: "Categoria não encontrada" });
     }
     if (existing.isDefault) {
       return res.status(400).json({ error: "Categorias padrão não podem ser excluídas" });
     }
+    // Só agora verifica se pertence ao usuário
+    if (existing.userId !== req.userId) {
+      return res.status(404).json({ error: "Categoria não pertence ao usuário" });
+    }
+
     await prisma.category.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (e) { next(e); }

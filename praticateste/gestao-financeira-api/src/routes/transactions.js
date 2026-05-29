@@ -79,19 +79,21 @@ router.put("/:id", async (req, res, next) => {
 // DELETE /transactions/:id - remove transação (apenas se pertencer ao usuário)
 router.delete("/:id", async (req, res, next) => {
   try {
-    // Verifica se a transação existe e pertence ao usuário
+    // Busca só pelo id primeiro
     const existing = await prisma.transaction.findFirst({
-      where: { id: req.params.id, userId: req.userId },
+      where: { id: req.params.id },
     });
+
     if (!existing) {
-      return res.status(404).json({ error: "Transação não encontrada ou não pertence ao usuário" });
+      return res.status(404).json({ error: "Transação não encontrada" });
+    }
+    if (existing.userId !== req.userId) {
+      return res.status(403).json({ error: "Transação não pertence ao usuário" });
     }
 
     await prisma.transaction.delete({ where: { id: req.params.id } });
     res.status(204).send();
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 });
 
 export default router;
