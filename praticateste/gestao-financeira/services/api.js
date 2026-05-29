@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ⚠️ Use o IP do seu computador no lugar de "192.168.X.X" (teste no navegador do celular)
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.22.39:3000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:3000";
 
 let _authtoken = null;
 
